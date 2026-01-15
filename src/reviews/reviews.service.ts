@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { JwtPayload } from 'src/utils/types';
@@ -15,15 +15,23 @@ export class ReviewsService {
     @InjectRepository(Review) private readonly reviewsRepo: Repository<Review>,
     private readonly productsService: ProductsService,
   ) {}
-  getReviews() {
-    return this.reviewsRepo;
+
+  async getReviews() {
+    return await this.reviewsRepo.find({
+      loadEagerRelations: false,
+      relations: ['user', 'product'],
+    });
   }
 
-  getReview(id: number) {
-    const review = this.reviewsRepo.findOneBy({ id });
-
+  async getReview(id: number) {
+    const review = await this.reviewsRepo.findOne({
+      where: { id },
+      loadEagerRelations: false,
+      relations: ['user', 'product'],
+    });
+    console.log(review);
     if (!review) {
-      throw new Error('Review not found');
+      throw new  NotFoundException('Review not found');
     }
 
     return review;
@@ -33,29 +41,31 @@ export class ReviewsService {
     const product = await this.productsService.getProduct(productId);
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundException('Product not found');
     }
     const newReview = this.reviewsRepo.create({
       ...review,
       user,
       product,
     });
-    return this.reviewsRepo.save(newReview);
+    // save and send review added seccessfully
+    await this.reviewsRepo.save(newReview);
+    return { message: 'Review added successfully' };
   }
 
   async updateReview(id: number, review: UpdateReviewDto) {
     const existingReview = await this.getReview(id);
     if (!existingReview) {
-      throw new Error('Review not found');
+      throw new NotFoundException('Review not found');
     }
     const updatedReview = Object.assign(existingReview, review);
-    return this.reviewsRepo.save(updatedReview);
+    return await this.reviewsRepo.save(updatedReview);
   }
 
   async deleteReview(id: number) {
     const review = await this.getReview(id);
     if (!review) {
-      throw new Error('Review not found');
+      throw new NotFoundException('Review not found');
     }
     await this.reviewsRepo.remove(review);
     return { message: 'Review deleted successfully' };

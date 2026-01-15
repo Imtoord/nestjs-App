@@ -55,7 +55,6 @@ export class ReviewsController {
   }
 
   @Delete(':id')
-  @Roles(UserType.ADMIN)
   @UseGuards(AuthGuard)
   deleteReview(@Param('id', ParseIntPipe) id: number) {
     return this.reviewsService.deleteReview(id);
