@@ -53,19 +53,25 @@ export class ReviewsService {
     return { message: 'Review added successfully' };
   }
 
-  async updateReview(id: number, review: UpdateReviewDto) {
+  async updateReview(id: number, review: UpdateReviewDto, user: JwtPayload) {
     const existingReview = await this.getReview(id);
     if (!existingReview) {
       throw new NotFoundException('Review not found');
+    }
+    if(existingReview.user.id !== user.id){
+      throw new NotFoundException(' access denied, you are not the owner of this review');
     }
     const updatedReview = Object.assign(existingReview, review);
     return await this.reviewsRepo.save(updatedReview);
   }
 
-  async deleteReview(id: number) {
+  async deleteReview(id: number, user: JwtPayload) {
     const review = await this.getReview(id);
     if (!review) {
       throw new NotFoundException('Review not found');
+    }
+    if(review.user.id !== user.id){
+      throw new NotFoundException(' access denied, you are not the owner of this review');
     }
     await this.reviewsRepo.remove(review);
     return { message: 'Review deleted successfully' };

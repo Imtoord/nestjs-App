@@ -50,13 +50,14 @@ export class ReviewsController {
   updateReview(
     @Param('id', ParseIntPipe) id: number,
     @Body() review: UpdateReviewDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.reviewsService.updateReview(id, review);
+    return this.reviewsService.updateReview(id, review, user);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard)
-  deleteReview(@Param('id', ParseIntPipe) id: number) {
-    return this.reviewsService.deleteReview(id);
+  deleteReview(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtPayload) {
+    return this.reviewsService.deleteReview(id, user);
   }
 }
